@@ -1,0 +1,59 @@
+package com.example.demo.jwt;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+import javax.security.auth.Subject;
+
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+@Service
+public class JwtService {
+	
+	private String secret="mysecret256enryptedmessagQYQYQWSJJKJJAJKHJASNJjGGGSQGHGQYGSGQHSVQGSQShnjjknkdje";
+
+	
+	public <T>T extractClaims(String token, Function<Claims,T>claimsResolver) {
+		final Claims claims= extractAllClaims(token);
+		return claimsResolver.apply(claims);
+		
+	}
+	public Claims  extractAllClaims(String token) {
+		return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+	}
+	public String extractUsername(String token) {
+		return extractClaims(token, Claims::getSubject);
+	}
+	public Date extractExpiration(String token) {
+		return extractClaims(token, Claims::getExpiration);
+	}
+	private Boolean isTokenExpired(String token) {
+		return extractExpiration(token).after(new Date(System.currentTimeMillis()));
+	}
+	public Boolean  validateToken(String token,UserDetails userDetails) {
+		final String username = extractUsername(token);
+	
+		return ((username.equals(userDetails.getUsername() ))&& (isTokenExpired(token)));
+	}
+	private String createToken (Map<String, Object>claims,String username) {
+		return Jwts.builder().setClaims(claims)
+				.setSubject(username)
+				.setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis()+1000*60*20))
+				.signWith(SignatureAlgorithm.HS256,secret)
+				.compact();
+				}
+	public String generateToken(String username,String role) {
+Map<String ,Object> claimsMap= new HashMap<>();
+
+claimsMap.put("role", role);                                                                                                                      
+return createToken(claimsMap, username);
+	}
+}
