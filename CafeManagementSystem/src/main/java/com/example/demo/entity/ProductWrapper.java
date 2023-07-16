@@ -84,6 +84,12 @@ public class ProductWrapper {
 	public void setCategoryNumber(String categoryNumber) {
 		this.categoryNumber = categoryNumber;
 	}
+
+	@Override
+	public String toString() {
+		return "ProductWrapper [id=" + id + ", name=" + name + ", description=" + description + ", price=" + price
+				+ ", status=" + status + ", categoryId=" + categoryId + ", categoryNumber=" + categoryNumber + "]";
+	}
 	
 	
 	

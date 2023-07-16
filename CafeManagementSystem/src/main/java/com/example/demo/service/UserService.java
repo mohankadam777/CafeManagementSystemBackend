@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.example.demo.entity.User;
 import com.example.demo.jwt.CustomerUserDetailsService;
+import com.example.demo.jwt.JwtFilter;
 import com.example.demo.jwt.JwtService;
 
 
@@ -41,6 +43,9 @@ public class UserService  {
 	
 	@Autowired
 	private JwtService jwtService;
+	
+	@Autowired
+	private  JwtFilter jwtFilter;
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -92,36 +97,70 @@ public class UserService  {
 		return new ResponseEntity<String>("Soething went wrong",HttpStatus.BAD_REQUEST);
 	}
 	///////////////////////////////////////Login//////////////////////////////////////////////
-	public  ResponseEntity<String> login(Map<String, String> requestMap) {
-//		log.info("Inside signup",requestMap)/;
+	public  ResponseEntity<Map<String,String>> login(Map<String, String> requestMap) {
+//		log.info("Inside signup",requestMap);
+System.out.println("Inside login method"+requestMap);
+HashMap<String, String> resultHashMap= new HashMap<>();
 		try {	
+			System.out.println("in try");
 			Authentication authentication=authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(requestMap.get("email"), requestMap.get("password")));	
+			System.out.println("result");
+			System.out.println("result"+authentication.isAuthenticated());
 			if(authentication.isAuthenticated()) {
+				System.out.println("in if");
 				
 				//***************Thukpatii*********//////
 				customerUserDetailsService.loadUserByUsername(requestMap.get("email"));
 				
 				System.out.println(customerUserDetailsService.getUserDetails());
 				if(customerUserDetailsService.getUserDetails().getStatus().equalsIgnoreCase("true")) {
-					return new ResponseEntity<String>("{\"token\":\""+
-							jwtService.generateToken(customerUserDetailsService.getUserDetails().getEmail(), customerUserDetailsService.getUserDetails().getRole())+"\"}",
-							HttpStatus.OK);
+					
+					resultHashMap.put("token", jwtService.generateToken(customerUserDetailsService.getUserDetails().getEmail(), customerUserDetailsService.getUserDetails().getRole()));
+					return new ResponseEntity<Map<String,String>>(resultHashMap,HttpStatus.OK);
 				}else {
-					return new ResponseEntity<String>("{\"message\":\""+"Wait for Admin approval"+"\"}",HttpStatus.BAD_REQUEST);
+					resultHashMap.put("message", "Wait for Admin approval");
+					return new ResponseEntity<Map<String,String>>(resultHashMap,HttpStatus.BAD_REQUEST);
 				}
+				
 			}
-//			User user = userRepo.findByEmail(requestMap.get("email"));
-	
-//		return null;	
+			resultHashMap.put("message", "Invalid credentials");
+			return new ResponseEntity<Map<String,String>>(resultHashMap,HttpStatus.UNAUTHORIZED);
+
 		} catch (Exception e) {
 		// TODO: handle exception
 			System.out.println(e);
-//			e.printStackTrace();
+			resultHashMap.put("message", "Something went wrong");
+			new ResponseEntity<Map<String,String>>(resultHashMap,HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-		return new ResponseEntity<String>("Soething went wrong",HttpStatus.BAD_REQUEST);
+		resultHashMap.put("message", "Something went wrong");
+		return new ResponseEntity<Map<String,String>>(resultHashMap,HttpStatus.BAD_REQUEST);
 	}
-	
+	public ResponseEntity<String> checkToken() {
+		try {
+			return new ResponseEntity<String>("{\"permit\" : \"true\" }",HttpStatus.OK);
+//			return new ResponseEntity<String>("true",HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println(e);
+		}return new ResponseEntity("Something went wrong",HttpStatus.BAD_REQUEST);
+	}
+	public ResponseEntity<String> changePassword(Map<String, String>reqMap) {
+		try {
+			User user = userRepo.findByEmail(jwtFilter.getCurrentUser()) ;
+			if(!user.equals(null)) {
+				if(user.getPassword().equals(reqMap.get("oldPassword"))) {
+					user.setPassword(reqMap.get("oldPassword"));
+					userRepo.save(user);
+					return new ResponseEntity<String>("Password changed successfully",HttpStatus.OK);
+				}return new ResponseEntity<String>("Incorrect Old Password",HttpStatus.BAD_REQUEST);
+			}return new ResponseEntity<String>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
+		
+		} catch (Exception e) {
+			System.out.println(e);
+			// TODO: handle exception
+		}return new ResponseEntity<String>("Something went wrong", HttpStatus.BAD_REQUEST);
+	}
 	///////////////////////////////////////////////////////////////////
 	public boolean validateSignUpMap(Map<String, String>requestMap) {
 	

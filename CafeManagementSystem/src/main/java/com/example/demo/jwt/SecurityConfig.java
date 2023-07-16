@@ -49,10 +49,10 @@ public class SecurityConfig {
 				.and()
 //				.authorizeHttpRequests().requestMatchers("/user/demo").authenticated()
 //				.and().formLogin().and().build();
-				.authorizeHttpRequests().requestMatchers("/user/demo","/category/**","/products").authenticated()
+				.authorizeHttpRequests().requestMatchers("/category/**","/products/**","/dashboard/**").authenticated()
 				.and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 				.and()
-				.authenticationProvider(authenticatinProvder())
+				.authenticationProvider(authenticationProvider())
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
 //				.and().authenticationManager(null)
@@ -60,7 +60,7 @@ public class SecurityConfig {
 
 	
 	@Bean
-	public AuthenticationProvider authenticatinProvder() {
+	public AuthenticationProvider authenticationProvider() {
 		DaoAuthenticationProvider authenticationProvider=new DaoAuthenticationProvider();
 		authenticationProvider.setUserDetailsService(userDetailsService());
 		authenticationProvider.setPasswordEncoder(passwordEncoder());

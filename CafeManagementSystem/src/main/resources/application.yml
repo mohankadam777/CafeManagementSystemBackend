@@ -8,10 +8,10 @@ spring:
       suffix: .jsp
   
   datasource:
-    url: "jdbc:mysql://localhost:3306/cafe"
-    username: "root"
-    password: ""
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: "jdbc:postgresql://localhost:5432/cafe"
+    username: "postgres"
+    password: "password"
+#    driver-class-name: com.postgresql.Driver
     
   jpa:
     hibernate:

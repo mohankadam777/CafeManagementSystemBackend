@@ -78,7 +78,7 @@ public class CategoryService {
 			if (useCase==null) {
 				return new ResponseEntity<List<Category>>(categoryRepo.findAll(),HttpStatus.OK);
 			}else if (useCase.equals("true")&&useCase!=null) {
-				System.err.println("Hello");
+//				System.err.println("Hello");s
 				return new ResponseEntity<List<Category>>(categoryRepo.getAllCategory(),HttpStatus.OK);
 			}
 		} catch (Exception e) {
